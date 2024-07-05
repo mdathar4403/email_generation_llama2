@@ -30,7 +30,7 @@ def getLLamaresponse(your_name, input_text,from_station, to_station):
                           template=template)
     
     ## Generate the ressponse from the LLama 2 model
-    response=llm(prompt.format(your_name=your_name,input_text=input_text,from_station=from_station,to_station=to_station))
+    response=llm.invoke(prompt.format(your_name=your_name,input_text=input_text,from_station=from_station,to_station=to_station))
     print(response)
     return response
 
