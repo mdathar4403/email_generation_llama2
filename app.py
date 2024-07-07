@@ -7,10 +7,30 @@ import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 sia = SentimentIntensityAnalyzer()
 
+import pathlib
+import textwrap
+
+import google.generativeai as genai
+
+#used to store your API key
+# from google.colab import userdata
+
+from IPython.display import display
+from IPython.display import Markdown
+
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import CTransformers
 # TheBloke/Llama-2-7B-Chat-GGML
+import re
+# Set the API key
+import os
+os.environ['GOOGLE_API_KEY']='AIzaSyBKKVhRIDqVi8QStwrMaHAyFmPle0JLWQo'
+genai.configure(api_key = os.environ['GOOGLE_API_KEY'])
+model = genai.GenerativeModel('gemini-pro')
 
+# def to_markdown(text):
+#   text = text.replace("*", "*")
+#   return Markdown(textwrap.indent(text, '>', predicate=lambda _:True))
 
 def getLLamaresponse(your_name, input_text,from_station, to_station):
 
@@ -21,20 +41,23 @@ def getLLamaresponse(your_name, input_text,from_station, to_station):
     
     ## Prompt Template
 
-    template="""
-        Write a sorry email using standard mail format to the customer {your_name} on behalf of railway authority regarding the issue {input_text} faced by the customer while travelling
-        from station {from_station} to station {to_station} helping the customer with the issue within 300 words. In last Yours faithfully, Railway Authority
-            """
+    template='''Write a sorry email using standard mail format to the customer {your_name} on behalf of railway authority regarding the issue {input_text} faced by the customer while travelling
+        from station {from_station} to station {to_station} helping the customer with the issue within 300 words. In last Yours faithfully, Railway Authority'''
     
     prompt=PromptTemplate(input_variables=["your_name","input_text","from_station","to_station"],
                           template=template)
     
     ## Generate the ressponse from the LLama 2 model
     response=llm.invoke(prompt.format(your_name=your_name,input_text=input_text,from_station=from_station,to_station=to_station))
-    print(response)
-    return response
+    text = re.sub(r"(?<!\w\.)\.(?=\s)", "\n", response)
+    # print(response)
+    return text
 
-
+# Gemini AI
+def gemini_ai(your_name, input_text, from_station, to_station):
+#   """Generates a sorry email for train delay using Gemini AI."""
+  response = model.generate_content(f"Write a sorry email to customer {your_name} for the issue {input_text} from {from_station} to {to_station} on behalf of railway authority.")
+  return response.text  # Return the plain text content
 
 def preprocess_text(text):
     if text=="":
@@ -97,12 +120,20 @@ with tab1:
     from_station = st.text_input("Enter the from station:")
     to_station = st.text_input("Enter the to station:")
 
-    submit=st.button("Generate")
+    option = ["Llama-2 ♾️", "Gemini ✨"]
+    selected_option = st.selectbox("Select a option:", option)
     
-    ## Final response
-    if submit:
-        with st.expander("Open Mail"):
-            st.write(getLLamaresponse(your_name, input_text,from_station, to_station))
+    
+    if selected_option=="Llama-2 ♾️":
+        submit=st.button("Generate")
+        if submit:
+            with st.expander("Open Mail"):
+                st.write(getLLamaresponse(your_name, input_text,from_station, to_station))
+    else:
+        submit=st.button("Generate")
+        if submit:
+            with st.expander("Open Mail"):
+                st.write(gemini_ai(your_name, input_text,from_station, to_station))
 
 with tab2:
     st.subheader("Welcome to Keywords/Sentiment score section")
